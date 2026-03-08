@@ -10,6 +10,18 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { userAPI, thingSpeakAPI } from '@/lib/api';
 import { authUtils } from '@/lib/auth';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts';
 
 function MetricCard({
   label,
@@ -79,6 +91,8 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'no-channel'>('disconnected');
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartLoading, setChartLoading] = useState(false);
   const router = useRouter();
 
   // Fetch ThingSpeak data
@@ -105,6 +119,47 @@ export default function DashboardPage() {
       return false;
     }
   }, []);
+
+  // Fetch historical data for charts
+  const fetchHistoricalData = useCallback(async (channelID: string, readAPIKey?: string) => {
+    setChartLoading(true);
+    try {
+      // Number of results based on time range
+      const resultsCount = timeRange === 'daily' ? 50 : timeRange === 'weekly' ? 200 : 500;
+      
+      const response = await thingSpeakAPI.getHistoricalData(channelID, resultsCount, readAPIKey);
+      
+      if (response.feeds && response.feeds.length > 0) {
+        // Transform data for recharts
+        const formattedData = response.feeds.map((feed: any) => {
+          const date = new Date(feed.created_at);
+          return {
+            time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            fullDate: date.toLocaleString(),
+            temperature: parseFloat(feed.field1) || 0,
+            flow: parseInt(feed.field2) || 0,
+            tds: parseFloat(feed.field3) || 0,
+            distance: parseFloat(feed.field4) || 0,
+            ph: parseFloat(feed.field5) || 0,
+          };
+        }).reverse(); // Oldest first for charts
+        
+        setChartData(formattedData);
+      }
+    } catch (err) {
+      console.error('Failed to fetch historical data:', err);
+    } finally {
+      setChartLoading(false);
+    }
+  }, [timeRange]);
+
+  // Fetch chart data when profile or timeRange changes
+  useEffect(() => {
+    if (profile?.channelID) {
+      fetchHistoricalData(profile.channelID, profile.readAPIKey);
+    }
+  }, [profile, timeRange, fetchHistoricalData]);
 
   useEffect(() => {
     const token = authUtils.getToken();
@@ -423,20 +478,222 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Trend Analysis */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Trend Analysis ({timeRange})</CardTitle>
-            <CardDescription>Historical water quality data</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
-              📊 Charts will render here with Recharts
-              <br />
-              (Connected to channel {profile?.channelID})
-            </div>
-          </CardContent>
-        </Card>
+        {/* Trend Analysis Charts */}
+        <div className="space-y-6">
+          <h3 className="text-2xl font-bold text-gray-900">📈 Trend Analysis ({timeRange})</h3>
+          
+          {chartLoading ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex items-center justify-center">
+                  <div className="text-gray-500">Loading chart data...</div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : chartData.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex items-center justify-center text-gray-500">
+                  No historical data available. Configure your ThingSpeak channel to see charts.
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Temperature Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">🌡️ Temperature Over Time</CardTitle>
+                  <CardDescription>Temperature readings in °C</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                        <YAxis domain={[0, 50]} tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                          labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="temperature" 
+                          stroke="#ef4444" 
+                          fillOpacity={1} 
+                          fill="url(#tempGradient)" 
+                          name="Temperature (°C)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* pH Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">⚗️ pH Level Over Time</CardTitle>
+                  <CardDescription>pH readings (optimal: 6.5-8.5)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                        <YAxis domain={[0, 14]} tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                          labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="ph" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={2}
+                          dot={{ fill: '#8b5cf6', r: 3 }}
+                          name="pH Level"
+                        />
+                        {/* Optimal range reference lines */}
+                        <Line 
+                          type="monotone" 
+                          dataKey={() => 6.5} 
+                          stroke="#22c55e" 
+                          strokeDasharray="5 5" 
+                          dot={false}
+                          name="Min Optimal (6.5)"
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey={() => 8.5} 
+                          stroke="#22c55e" 
+                          strokeDasharray="5 5" 
+                          dot={false}
+                          name="Max Optimal (8.5)"
+                        />
+                        <Legend />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* TDS Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">🧪 TDS (Total Dissolved Solids) Over Time</CardTitle>
+                  <CardDescription>TDS readings in ppm (optimal: below 500)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="tdsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                        <YAxis domain={[0, 1000]} tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                          labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="tds" 
+                          stroke="#06b6d4" 
+                          fillOpacity={1} 
+                          fill="url(#tdsGradient)" 
+                          name="TDS (ppm)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Water Level (Distance) Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">📏 Water Level Over Time</CardTitle>
+                  <CardDescription>Distance sensor readings in cm</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="distanceGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                          labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="distance" 
+                          stroke="#3b82f6" 
+                          fillOpacity={1} 
+                          fill="url(#distanceGradient)" 
+                          name="Water Level (cm)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Flow Status Chart (Binary) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">💧 Flow Status Over Time</CardTitle>
+                  <CardDescription>Water flow detection (1 = flowing, 0 = not flowing)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                        <YAxis domain={[0, 1]} ticks={[0, 1]} tick={{ fontSize: 12 }} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                          labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
+                          formatter={(value: number) => [value === 1 ? 'Flowing' : 'Not Flowing', 'Status']}
+                        />
+                        <Line 
+                          type="stepAfter" 
+                          dataKey="flow" 
+                          stroke="#22c55e" 
+                          strokeWidth={3}
+                          dot={{ fill: '#22c55e', r: 4 }}
+                          name="Flow Status"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
