@@ -242,9 +242,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 bg-grid-cyan">
       {/* Navigation */}
-      <nav className="bg-white shadow-md sticky top-0 z-50">
+      <nav className="bg-white/95 backdrop-blur-sm shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-cyan-600">Aqua Monitor</h1>
           <div className="flex gap-4 items-center">
