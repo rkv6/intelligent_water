@@ -499,15 +499,15 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           ) : (
-            <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Temperature Chart */}
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-lg">🌡️ Temperature Over Time</CardTitle>
                   <CardDescription>Temperature readings in °C</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-72">
+                  <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
@@ -517,8 +517,8 @@ export default function DashboardPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                        <YAxis domain={[0, 50]} tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[0, 50]} tick={{ fontSize: 10 }} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
                           labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
@@ -539,17 +539,17 @@ export default function DashboardPage() {
 
               {/* pH Chart */}
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-lg">⚗️ pH Level Over Time</CardTitle>
                   <CardDescription>pH readings (optimal: 6.5-8.5)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-72">
+                  <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                        <YAxis domain={[0, 14]} tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[0, 14]} tick={{ fontSize: 10 }} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
                           labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
@@ -559,27 +559,10 @@ export default function DashboardPage() {
                           dataKey="ph" 
                           stroke="#8b5cf6" 
                           strokeWidth={2}
-                          dot={{ fill: '#8b5cf6', r: 3 }}
+                          dot={{ fill: '#8b5cf6', r: 2 }}
                           name="pH Level"
                         />
-                        {/* Optimal range reference lines */}
-                        <Line 
-                          type="monotone" 
-                          dataKey={() => 6.5} 
-                          stroke="#22c55e" 
-                          strokeDasharray="5 5" 
-                          dot={false}
-                          name="Min Optimal (6.5)"
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey={() => 8.5} 
-                          stroke="#22c55e" 
-                          strokeDasharray="5 5" 
-                          dot={false}
-                          name="Max Optimal (8.5)"
-                        />
-                        <Legend />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -588,12 +571,12 @@ export default function DashboardPage() {
 
               {/* TDS Chart */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">🧪 TDS (Total Dissolved Solids) Over Time</CardTitle>
-                  <CardDescription>TDS readings in ppm (optimal: below 500)</CardDescription>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">🧪 TDS Over Time</CardTitle>
+                  <CardDescription>TDS in ppm (optimal: below 500)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-72">
+                  <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
@@ -603,8 +586,8 @@ export default function DashboardPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                        <YAxis domain={[0, 1000]} tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[0, 1000]} tick={{ fontSize: 10 }} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
                           labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
@@ -625,12 +608,12 @@ export default function DashboardPage() {
 
               {/* Water Level (Distance) Chart */}
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-lg">📏 Water Level Over Time</CardTitle>
                   <CardDescription>Distance sensor readings in cm</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-72">
+                  <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
@@ -640,8 +623,8 @@ export default function DashboardPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
                           labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
@@ -660,19 +643,19 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Flow Status Chart (Binary) */}
-              <Card>
-                <CardHeader>
+              {/* Flow Status Chart (Binary) - Full width */}
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-lg">💧 Flow Status Over Time</CardTitle>
                   <CardDescription>Water flow detection (1 = flowing, 0 = not flowing)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-72">
+                  <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" tick={{ fontSize: 12 }} />
-                        <YAxis domain={[0, 1]} ticks={[0, 1]} tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[0, 1]} ticks={[0, 1]} tick={{ fontSize: 10 }} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
                           labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
@@ -683,7 +666,7 @@ export default function DashboardPage() {
                           dataKey="flow" 
                           stroke="#22c55e" 
                           strokeWidth={3}
-                          dot={{ fill: '#22c55e', r: 4 }}
+                          dot={{ fill: '#22c55e', r: 3 }}
                           name="Flow Status"
                         />
                       </LineChart>
@@ -691,7 +674,7 @@ export default function DashboardPage() {
                   </div>
                 </CardContent>
               </Card>
-            </>
+            </div>
           )}
         </div>
       </main>
