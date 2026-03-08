@@ -14,8 +14,14 @@ backend/node_modules/
 backend/dist/
 backend/.env
 backend/.env.local
+backend/.env.development
+backend/.env.production
 backend/logs/
 backend/tmp/
+
+# Raspberry Pi config (contains API keys)
+config.py
+*.config.py
 
 # IDEs
 .vscode/

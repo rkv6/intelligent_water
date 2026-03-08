@@ -20,8 +20,13 @@ print("✅ Serial connection to Arduino opened successfully!")
 # print("📶 GSM module connected successfully!")
 
 # ------------------- THINGSPEAK CONFIG -------------------
-THINGSPEAK_WRITE_API_KEY = "GO0S6KBJQ5XT1CO9"  # Your Write API Key
-THINGSPEAK_READ_API_KEY = "QMYHJHS1WF9DP8FR"   # Your Read API Key (for reference)
+# Load API keys from environment variables or config file
+# Create a file called 'config.py' with your keys:
+# THINGSPEAK_WRITE_API_KEY = "your_write_api_key"
+# THINGSPEAK_READ_API_KEY = "your_read_api_key"
+import os
+THINGSPEAK_WRITE_API_KEY = os.environ.get("THINGSPEAK_WRITE_API_KEY", "YOUR_WRITE_API_KEY")
+THINGSPEAK_READ_API_KEY = os.environ.get("THINGSPEAK_READ_API_KEY", "YOUR_READ_API_KEY")
 THINGSPEAK_URL = "https://api.thingspeak.com/update"
 
 def upload_to_thingspeak(temp, flow, tds, distance, ph):
