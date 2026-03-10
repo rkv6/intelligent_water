@@ -103,11 +103,16 @@ mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/intelligent-water?ret
 
 #### 3. Update Backend .env File
 
-Edit `backend/.env`:
+Edit `backend/.env` (DO NOT COMMIT THIS FILE):
 ```env
 MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/intelligent-water?retryWrites=true&w=majority
-JWT_SECRET=your-secret-key-here
+JWT_SECRET=your-secret-key-here-change-in-production
 PORT=5000
+THINGSPEAK_BASE_URL=https://api.thingspeak.com
+NODE_ENV=development
+```
+
+**⚠️ SECURITY:** Never commit `.env` file. Use `.env.example` as template
 NODE_ENV=development
 ```
 

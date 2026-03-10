@@ -88,7 +88,7 @@ mongod
 ```
 1. Create account at https://mongodb.com/cloud/atlas
 2. Create free M0 cluster
-3. Get connection string: mongodb+srv://user:password@cluster.mongodb.net/db
+3. Get connection string from Atlas (store in .env, never in docs)
 4. Update MONGODB_URI in backend/.env
 5. Ensure IP whitelist allows 0.0.0.0/0 for development
 ```
@@ -96,8 +96,8 @@ mongod
 ### Q: "Unauthorized: not authorized on admin to execute command"
 **A:** Atlas connection string issue:
 - Check username/password in connection string are URL-encoded
-- Special characters like `@` should be `%40`
-- Example: `mongodb+srv://user%40domain:pass%40123@cluster.mongodb.net/db`
+- Special characters like `@` should be `%40`, `:` can stay as is
+- Store credentials in `.env` file, never in documentation
 
 ### Q: "MongoDB process already running on port 27017"
 **A:** Check if MongoDB is already running:
